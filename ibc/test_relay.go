@@ -1,28 +1,40 @@
 package ibc
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 )
 
+// all methods on this struct have the same signature and are method names that will be called by the CLI
+type IBCTestCase struct{}
+
+// uses reflection to get test case
 func GetTestCase(testCase string) (func(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error, error) {
-	switch testCase {
-	case "RelayPacketTest":
-		return RelayPacketTest, nil
-	case "RelayPacketTestNoTimeout":
-		return RelayPacketTestNoTimeout, nil
-	case "RelayPacketTestHeightTimeout":
-		return RelayPacketTestHeightTimeout, nil
-	case "RelayPacketTestTimestampTimeout":
-		return RelayPacketTestTimestampTimeout, nil
-	default:
-		return nil, fmt.Errorf("No test case for: %s", testCase)
+	v := reflect.ValueOf(IBCTestCase{})
+	m := v.MethodByName(testCase)
+	if m.Kind() != reflect.Func {
+		return nil, fmt.Errorf("invalid test case: %s", testCase)
 	}
+
+	testCaseFunc := func(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
+		args := []reflect.Value{reflect.ValueOf(testName), reflect.ValueOf(srcChain), reflect.ValueOf(dstChain), reflect.ValueOf(relayerImplementation)}
+		result := m.Call(args)
+		if len(result) != 1 || !result[0].CanInterface() {
+			return errors.New("error reflecting error return var")
+		}
+
+		err, _ := result[0].Interface().(error)
+		return err
+	}
+
+	return testCaseFunc, nil
 }
 
-func RelayPacketTest(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
+func (ibc IBCTestCase) RelayPacketTest(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
 	ctx, home, pool, network, cleanup, err := SetupTestRun(testName)
 	if err != nil {
 		return err
@@ -111,7 +123,7 @@ func RelayPacketTest(testName string, srcChain Chain, dstChain Chain, relayerImp
 }
 
 // makes sure that a queued packet that is timed out (relative height timeout) will not be relayed
-func RelayPacketTestNoTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
+func (ibc IBCTestCase) RelayPacketTestNoTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
 	ctx, home, pool, network, cleanup, err := SetupTestRun(testName)
 	if err != nil {
 		return err
@@ -194,7 +206,7 @@ func RelayPacketTestNoTimeout(testName string, srcChain Chain, dstChain Chain, r
 }
 
 // makes sure that a queued packet that is timed out (relative height timeout) will not be relayed
-func RelayPacketTestHeightTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
+func (ibc IBCTestCase) RelayPacketTestHeightTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
 	ctx, home, pool, network, cleanup, err := SetupTestRun(testName)
 	if err != nil {
 		return err
@@ -281,7 +293,7 @@ func RelayPacketTestHeightTimeout(testName string, srcChain Chain, dstChain Chai
 }
 
 // makes sure that a queued packet that is timed out (nanoseconds timeout) will not be relayed
-func RelayPacketTestTimestampTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
+func (ibc IBCTestCase) RelayPacketTestTimestampTimeout(testName string, srcChain Chain, dstChain Chain, relayerImplementation RelayerImplementation) error {
 	ctx, home, pool, network, cleanup, err := SetupTestRun(testName)
 	if err != nil {
 		return err

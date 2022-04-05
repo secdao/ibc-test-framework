@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// These tests are run by CI
+
 func getTestChains(t *testing.T) (ibc.Chain, ibc.Chain) {
 	numValidatorsPerChain := 4
 	numFullNodesPerChain := 1
@@ -24,7 +26,7 @@ func TestRelayPacket(t *testing.T) {
 	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
-	require.NoError(t, ibc.RelayPacketTest(t.Name(), srcChain, dstChain, relayerImplementation))
+	require.NoError(t, ibc.IBCTestCase{}.RelayPacketTest(t.Name(), srcChain, dstChain, relayerImplementation))
 }
 
 // queued packet with no timeout should be relayed
@@ -32,7 +34,7 @@ func TestNoTimeout(t *testing.T) {
 	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
-	require.NoError(t, ibc.RelayPacketTestNoTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
+	require.NoError(t, ibc.IBCTestCase{}.RelayPacketTestNoTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
 }
 
 // queued packet with relative height timeout that expires should not be relayed
@@ -40,7 +42,7 @@ func TestHeightTimeout(t *testing.T) {
 	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
-	require.NoError(t, ibc.RelayPacketTestHeightTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
+	require.NoError(t, ibc.IBCTestCase{}.RelayPacketTestHeightTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
 }
 
 // queued packet with relative timestamp timeout (ns) that expires should not be relayed
@@ -48,5 +50,5 @@ func TestTimestampTimeout(t *testing.T) {
 	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
-	require.NoError(t, ibc.RelayPacketTestTimestampTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
+	require.NoError(t, ibc.IBCTestCase{}.RelayPacketTestTimestampTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
 }
