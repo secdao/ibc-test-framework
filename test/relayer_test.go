@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getTestChainsGaiaOsmosis(t *testing.T) (ibc.Chain, ibc.Chain) {
+func getTestChains(t *testing.T) (ibc.Chain, ibc.Chain) {
 	numValidatorsPerChain := 4
 	numFullNodesPerChain := 1
 
@@ -21,7 +21,7 @@ func getTestChainsGaiaOsmosis(t *testing.T) (ibc.Chain, ibc.Chain) {
 
 // queued packet with default timeout should be relayed
 func TestRelayPacket(t *testing.T) {
-	srcChain, dstChain := getTestChainsGaiaOsmosis(t)
+	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
 	require.NoError(t, ibc.RelayPacketTest(t.Name(), srcChain, dstChain, relayerImplementation))
@@ -29,7 +29,7 @@ func TestRelayPacket(t *testing.T) {
 
 // queued packet with no timeout should be relayed
 func TestNoTimeout(t *testing.T) {
-	srcChain, dstChain := getTestChainsGaiaOsmosis(t)
+	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
 	require.NoError(t, ibc.RelayPacketTestNoTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
@@ -37,7 +37,7 @@ func TestNoTimeout(t *testing.T) {
 
 // queued packet with relative height timeout that expires should not be relayed
 func TestHeightTimeout(t *testing.T) {
-	srcChain, dstChain := getTestChainsGaiaOsmosis(t)
+	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
 	require.NoError(t, ibc.RelayPacketTestHeightTimeout(t.Name(), srcChain, dstChain, relayerImplementation))
@@ -45,7 +45,7 @@ func TestHeightTimeout(t *testing.T) {
 
 // queued packet with relative timestamp timeout (ns) that expires should not be relayed
 func TestTimestampTimeout(t *testing.T) {
-	srcChain, dstChain := getTestChainsGaiaOsmosis(t)
+	srcChain, dstChain := getTestChains(t)
 	relayerImplementation := ibc.CosmosRly
 
 	require.NoError(t, ibc.RelayPacketTestTimestampTimeout(t.Name(), srcChain, dstChain, relayerImplementation))

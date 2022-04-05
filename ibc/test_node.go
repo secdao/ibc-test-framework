@@ -18,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	"github.com/ory/dockertest"
@@ -43,7 +42,6 @@ type ChainNode struct {
 	Client       rpcclient.Client
 	Container    *docker.Container
 	testName     string
-	ec           params.EncodingConfig
 }
 
 // ChainNodes is a collection of ChainNode
@@ -100,11 +98,11 @@ func (tn *ChainNode) CliContext() client.Context {
 	return client.Context{
 		Client:            tn.Client,
 		ChainID:           tn.Chain.Config().ChainID,
-		InterfaceRegistry: tn.ec.InterfaceRegistry,
+		InterfaceRegistry: encoding.InterfaceRegistry,
 		Input:             os.Stdin,
 		Output:            os.Stdout,
 		OutputFormat:      "json",
-		LegacyAmino:       tn.ec.Amino,
+		LegacyAmino:       encoding.Amino,
 		TxConfig:          encoding.TxConfig,
 	}
 }

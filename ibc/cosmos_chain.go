@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/types"
 	authTx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -150,7 +149,7 @@ func (c *CosmosChain) initializeChainNodes(testName, home string,
 	}
 	for i := 0; i < count; i++ {
 		tn := &ChainNode{Home: home, Index: i, Chain: c,
-			Pool: pool, NetworkID: networkID, testName: testName, ec: simapp.MakeTestEncodingConfig()}
+			Pool: pool, NetworkID: networkID, testName: testName}
 		tn.MkDir()
 		chainNodes = append(chainNodes, tn)
 	}

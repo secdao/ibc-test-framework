@@ -34,10 +34,11 @@ func RelayPacketTest(testName string, srcChain Chain, dstChain Chain, relayerImp
 	// funds relayer src and dst wallets on respective chain in genesis
 	// creates a user account on the src chain (separate fullnode)
 	// funds user account on src chain in genesis
-	channels, user, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, nil)
+	channels, user, rlyCleanup, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, nil)
 	if err != nil {
 		return err
 	}
+	defer rlyCleanup()
 
 	// will test a user sending an ibc transfer from the src chain to the dst chain
 	// denom will be src chain native denom
@@ -152,10 +153,11 @@ func RelayPacketTestNoTimeout(testName string, srcChain Chain, dstChain Chain, r
 	}
 
 	// Startup both chains and relayer
-	_, user, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
+	_, user, rlyCleanup, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
 	if err != nil {
 		return err
 	}
+	defer rlyCleanup()
 
 	// wait for both chains to produce 10 blocks
 	if err := WaitForBlocks(srcChain, dstChain, 10); err != nil {
@@ -238,10 +240,11 @@ func RelayPacketTestHeightTimeout(testName string, srcChain Chain, dstChain Chai
 	}
 
 	// Startup both chains and relayer
-	_, user, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
+	_, user, rlyCleanup, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
 	if err != nil {
 		return err
 	}
+	defer rlyCleanup()
 
 	// wait for both chains to produce 10 blocks
 	if err := WaitForBlocks(srcChain, dstChain, 10); err != nil {
@@ -327,10 +330,11 @@ func RelayPacketTestTimestampTimeout(testName string, srcChain Chain, dstChain C
 	}
 
 	// Startup both chains and relayer
-	_, user, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
+	_, user, rlyCleanup, err := StartChainsAndRelayer(testName, ctx, pool, network, home, srcChain, dstChain, relayerImplementation, preRelayerStart)
 	if err != nil {
 		return err
 	}
+	defer rlyCleanup()
 
 	// wait for both chains to produce 10 blocks
 	if err := WaitForBlocks(srcChain, dstChain, 10); err != nil {

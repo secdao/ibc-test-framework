@@ -84,7 +84,7 @@ func StartChainsAndRelayer(
 	dstChain Chain,
 	relayerImplementation RelayerImplementation,
 	preRelayerStart func(channels []ChannelOutput, user User) error,
-) ([]ChannelOutput, User, error) {
+) ([]ChannelOutput, User, func(), error) {
 	var relayerImpl Relayer
 	switch relayerImplementation {
 	case CosmosRly:
@@ -100,11 +100,15 @@ func StartChainsAndRelayer(
 		// not yet supported
 	}
 
+	errResponse := func(err error) ([]ChannelOutput, User, func(), error) {
+		return []ChannelOutput{}, User{}, nil, err
+	}
+
 	if err := srcChain.Initialize(testName, home, pool, networkID); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 	if err := dstChain.Initialize(testName, home, pool, networkID); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	srcChainCfg := srcChain.Config()
@@ -112,28 +116,28 @@ func StartChainsAndRelayer(
 
 	if err := relayerImpl.AddChainConfiguration(ctx, srcChainCfg, srcAccountKeyName,
 		srcChain.GetRPCAddress(), srcChain.GetGRPCAddress()); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	if err := relayerImpl.AddChainConfiguration(ctx, dstChainCfg, dstAccountKeyName,
 		dstChain.GetRPCAddress(), dstChain.GetGRPCAddress()); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	srcRelayerWallet, err := relayerImpl.AddKey(ctx, srcChain.Config().ChainID, srcAccountKeyName)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 	dstRelayerWallet, err := relayerImpl.AddKey(ctx, dstChain.Config().ChainID, dstAccountKeyName)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	srcAccount := srcRelayerWallet.Address
 	dstAccount := dstRelayerWallet.Address
 
 	if err := relayerImpl.GeneratePath(ctx, srcChainCfg.ChainID, dstChainCfg.ChainID, testPathName); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	// Fund relayer account on src chain
@@ -152,21 +156,21 @@ func StartChainsAndRelayer(
 
 	// Generate key to be used for "user" that will execute IBC transaction
 	if err := srcChain.CreateKey(ctx, userAccountKeyName); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 	userAccountAddressBytes, err := srcChain.GetAddress(userAccountKeyName)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	userAccountSrc, err := types.Bech32ifyAddressBytes(srcChainCfg.Bech32Prefix, userAccountAddressBytes)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	userAccountDst, err := types.Bech32ifyAddressBytes(dstChainCfg.Bech32Prefix, userAccountAddressBytes)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	user := User{
@@ -192,42 +196,42 @@ func StartChainsAndRelayer(
 	})
 
 	if err := chainsGenesisWaitGroup.Wait(); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	if err := relayerImpl.LinkPath(ctx, testPathName); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
 	channels, err := relayerImpl.GetChannels(ctx, srcChainCfg.ChainID)
 	if err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 	if len(channels) != 1 {
-		return []ChannelOutput{}, User{}, fmt.Errorf("channel count invalid. expected: 1, actual: %d", len(channels))
+		return errResponse(fmt.Errorf("channel count invalid. expected: 1, actual: %d", len(channels)))
 	}
 
 	if preRelayerStart != nil {
 		if err := preRelayerStart(channels, user); err != nil {
-			return []ChannelOutput{}, User{}, err
+			return errResponse(err)
 		}
 	}
 
 	if err := relayerImpl.StartRelayer(ctx, testPathName); err != nil {
-		return []ChannelOutput{}, User{}, err
+		return errResponse(err)
 	}
 
-	defer func() {
+	// wait for relayer to start up
+	time.Sleep(5 * time.Second)
+
+	relayerCleanup := func() {
 		err := relayerImpl.StopRelayer(ctx)
 		if err != nil {
 			fmt.Printf("error stopping relayer: %v\n", err)
 		}
-	}()
+	}
 
-	// wait for relayer to start up
-	time.Sleep(30 * time.Second)
-
-	return channels, user, nil
+	return channels, user, relayerCleanup, nil
 }
 
 func WaitForBlocks(srcChain Chain, dstChain Chain, blocksToWait int64) error {
