@@ -16,3 +16,11 @@ The goals are to support:
 The tests will be run in `go test` and utilize docker to spin up complete chains and utilize only the chain docker images themseleves.
 
 This repo will rely on images built from https://github.com/strangelove-ventures/heighliner
+
+# How to test
+0. get genesis file, e.g. `wget http://88.99.65.142/juno-96-dimi.zip`
+1. build the correct binaries `go build`
+2. execute all tests or a specific test of interest:
+```
+./ibc-test-framework test -s juno:v2.1.0 --src-chain-id juno-2 JunoConsesusTest`
+```
