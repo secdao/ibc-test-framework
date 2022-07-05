@@ -12,9 +12,8 @@ on:
 
 jobs:
   test:
-    name: run tests
-    #runs-on: [self-hosted, linux]
-    runs-on: ubuntu-latest
+    name: tests
+    runs-on: [self-hosted, linux]
     steps:
       # Install and setup go
       - name: Set up Go 1.17
@@ -22,8 +21,7 @@ jobs:
         with:
           go-version: 1.17
 
-      # checkout horcrux
-      - name: checkout horcrux
+      - name: checkout ibctest
         uses: actions/checkout@v2
 
       # cleanup docker environment on self-hosted test runner
@@ -33,6 +31,12 @@ jobs:
       #     docker rm -f $(docker ps -a -q) || true
       #     docker network prune -f || true
 
+      # cleanup environment on self-hosted test runner
+      - name: clean
+        run: -|
+          rm -rf ~/.ibctest
+
       # run tests
-      - name: run tests
-        run: go test -timeout 30m -v ./...
+      - name: run all tests
+        # show cosmos chain and relayer logs on test failure
+        run: (go test -timeout 30m -v -p 2 ./...) || (echo "\n\n*****CHAIN and RELAYER LOGS*****" && cat "$HOME/.ibctest/logs/ibctest.log" && exit 1)
